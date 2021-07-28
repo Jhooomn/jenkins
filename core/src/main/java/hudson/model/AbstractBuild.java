@@ -109,6 +109,8 @@ public abstract class AbstractBuild<P extends AbstractProject<P,R>,R extends Abs
      * Set if we want the blame information to flow from upstream to downstream build.
      */
     private static final boolean upstreamCulprits = SystemProperties.getBoolean("hudson.upstreamCulprits");
+    public static final String CHANGELOG_XML = "changelog.xml";
+    public static final String FAILED = "{0} : {1} failed";
 
     /**
      * Name of the agent this project was built on.
@@ -318,7 +320,7 @@ public abstract class AbstractBuild<P extends AbstractProject<P,R>,R extends Abs
      */
     public FilePath[] getModuleRoots() {
         FilePath ws = getWorkspace();
-        if (ws==null)    return null;
+        if (ws==null)    return ws;
         return getParent().getScm().getModuleRoots(ws, this);
     }
 
@@ -344,9 +346,8 @@ public abstract class AbstractBuild<P extends AbstractProject<P,R>,R extends Abs
         Set<User> c = RunWithSCM.super.calculateCulprits();
 
         AbstractBuild<P,R> p = getPreviousCompletedBuild();
-        if (upstreamCulprits) {
-            // If we have dependencies since the last successful build, add their authors to our list
-            if (p != null && p.getPreviousNotFailedBuild() != null) {
+        // If we have dependencies since the last successful build, add their authors to our list
+            if (upstreamCulprits && p != null && p.getPreviousNotFailedBuild() != null) {
                 Map<AbstractProject, AbstractBuild.DependencyChange> depmap =
                         p.getDependencyChanges(p.getPreviousSuccessfulBuild());
                 for (AbstractBuild.DependencyChange dep : depmap.values()) {
@@ -357,7 +358,6 @@ public abstract class AbstractBuild<P extends AbstractProject<P,R>,R extends Abs
                     }
                 }
             }
-        }
 
         return c;
     }
@@ -635,7 +635,7 @@ public abstract class AbstractBuild<P extends AbstractProject<P,R>,R extends Abs
                 build.scm = NullChangeLogParser.INSTANCE;
 
                 try {
-                    File changeLogFile = new File(build.getRootDir(), "changelog.xml");
+                    File changeLogFile = new File(build.getRootDir(), CHANGELOG_XML);
                     if (project.checkout(build, launcher,listener, changeLogFile)) {
                         // check out succeeded
                         SCM scm = project.getScm();
@@ -755,7 +755,7 @@ public abstract class AbstractBuild<P extends AbstractProject<P,R>,R extends Abs
                 if ((bs instanceof Publisher && ((Publisher)bs).needsToRunAfterFinalized()) ^ phase)
                     try {
                         if (!perform(bs,listener)) {
-                            LOGGER.log(Level.FINE, "{0} : {1} failed", new Object[] {AbstractBuild.this, bs});
+                            LOGGER.log(Level.FINE, FAILED, new Object[] {AbstractBuild.this, bs});
                             r = false;
                             if (phase) {
                                 setResult(Result.FAILURE);
@@ -779,7 +779,7 @@ public abstract class AbstractBuild<P extends AbstractProject<P,R>,R extends Abs
             }
 
             if (e instanceof AbortException) {
-                LOGGER.log(Level.FINE, "{0} : {1} failed", new Object[] {AbstractBuild.this, buildStep});
+                LOGGER.log(Level.FINE, FAILED, new Object[] {AbstractBuild.this, buildStep});
                 listener.error("Step ‘" + buildStep + "’ failed: " + e.getMessage());
             } else {
                 String msg = "Step ‘" + buildStep + "’ aborted due to exception: ";
@@ -857,7 +857,7 @@ public abstract class AbstractBuild<P extends AbstractProject<P,R>,R extends Abs
         protected final boolean preBuild(BuildListener listener,Iterable<? extends BuildStep> steps) {
             for (BuildStep bs : steps)
                 if (!bs.prebuild(AbstractBuild.this,listener)) {
-                    LOGGER.log(Level.FINE, "{0} : {1} failed", new Object[] {AbstractBuild.this, bs});
+                    LOGGER.log(Level.FINE, FAILED, new Object[] {AbstractBuild.this, bs});
                     return false;
                 }
             return true;
@@ -923,12 +923,12 @@ public abstract class AbstractBuild<P extends AbstractProject<P,R>,R extends Abs
      * Returns true if the changelog is already computed.
      */
     public boolean hasChangeSetComputed() {
-        File changelogFile = new File(getRootDir(), "changelog.xml");
+        File changelogFile = new File(getRootDir(), CHANGELOG_XML);
         return changelogFile.exists();
     }
 
     private ChangeLogSet<? extends ChangeLogSet.Entry> calcChangeSet() {
-        File changelogFile = new File(getRootDir(), "changelog.xml");
+        File changelogFile = new File(getRootDir(), CHANGELOG_XML);
         if (!changelogFile.exists())
             return ChangeLogSet.createEmpty(this);
 

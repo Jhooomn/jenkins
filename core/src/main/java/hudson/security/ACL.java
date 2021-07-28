@@ -370,7 +370,7 @@ public abstract class ACL {
      * of acting on behalf of an user, such as doing builds.
      * @since 2.266
      */
-    public static final Authentication SYSTEM2 = new UsernamePasswordAuthenticationToken(SYSTEM_USERNAME,"SYSTEM");
+    public static final Authentication SYSTEM2 = new UsernamePasswordAuthenticationToken(SYSTEM_USERNAME, SYSTEM_USERNAME);
 
     /**
      * @deprecated use {@link #SYSTEM2}

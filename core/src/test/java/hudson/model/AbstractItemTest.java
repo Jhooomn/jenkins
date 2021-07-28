@@ -15,6 +15,8 @@ import org.jvnet.hudson.test.Issue;
  */
 public class AbstractItemTest {
 
+    public static final String NAME_NOT_EDITABLE_ITEM = "NameNotEditableItem";
+
     private static class StubAbstractItem extends AbstractItem {
 
         protected StubAbstractItem() {
@@ -112,14 +114,14 @@ public class AbstractItemTest {
     public void renameMethodShouldThrowExceptionWhenNotIsNameEditable() {
 
         //GIVEN
-        NameNotEditableItem item = new NameNotEditableItem(null,"NameNotEditableItem");
+        NameNotEditableItem item = new NameNotEditableItem(null, NAME_NOT_EDITABLE_ITEM);
 
         //WHEN
         final IOException e = assertThrows("An item with isNameEditable false must throw exception when trying to rename it.",
                 IOException.class, () -> item.renameTo("NewName"));
 
         assertEquals("Trying to rename an item that does not support this operation.", e.getMessage());
-        assertEquals("NameNotEditableItem", item.getName());
+        assertEquals(NAME_NOT_EDITABLE_ITEM, item.getName());
     }
 
     @Test
@@ -127,13 +129,13 @@ public class AbstractItemTest {
     public void doConfirmRenameMustThrowFormFailureWhenNotIsNameEditable() throws IOException {
 
         //GIVEN
-        NameNotEditableItem item = new NameNotEditableItem(null,"NameNotEditableItem");
+        NameNotEditableItem item = new NameNotEditableItem(null,NAME_NOT_EDITABLE_ITEM);
 
         //WHEN
         final Failure f = assertThrows("An item with isNameEditable false must throw exception when trying to call doConfirmRename.",
                 Failure.class, () -> item.doConfirmRename("MyNewName"));
         assertEquals("Trying to rename an item that does not support this operation.", f.getMessage());
-        assertEquals("NameNotEditableItem", item.getName());
+        assertEquals(NAME_NOT_EDITABLE_ITEM, item.getName());
     }
 
 }

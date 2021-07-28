@@ -403,7 +403,7 @@ public abstract class AbstractItem extends Actionable implements Item, HttpDelet
                             break; // succeeded
                         }
                         try {
-                            Thread.sleep(500);
+                            Thread.wait(500);
                         } catch (InterruptedException e) {
                             // process the interruption later
                             interrupted = true;
